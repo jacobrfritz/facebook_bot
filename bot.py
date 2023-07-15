@@ -14,6 +14,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time,re,json,os,logging
 from datetime import datetime
 from dotenv import load_dotenv
+import chat_gpt
+
+from random_user_agent.user_agent import UserAgent
+from random_user_agent.params import SoftwareName,OperatingSystem
 
 logging.basicConfig(filename='app.log', format='%(name)s - %(levelname)s - %(message)s',level=logging.DEBUG)
 
@@ -39,9 +43,17 @@ current_day = datetime.now().day
 current_hour = datetime.now().hour
 current_minute = datetime.now().minute
 
+software_names = [SoftwareName.CHROME.value]
+operating_systems = [OperatingSystem.WINDOWS.value,OperatingSystem.LINUX.value]
+user_agent_rotator = UserAgent(software_names = software_names, 
+                               operating_systems = operating_systems, 
+                               limit = 100)
+user_agent = user_agent_rotator.get_random_user_agent() 
 option = Options()
+option.add_argument(f'user-agent={user_agent}')
+option.add_argument('--disable-gpu')
 option.add_argument("--disable-notifications")
-#option.add_argument("--headless=new")
+option.add_argument("--headless=new")
 
 driver = webdriver.Chrome(options=option,service=ChromeService(ChromeDriverManager().install()))
         
@@ -59,8 +71,8 @@ def crawl():
     return links_to_crawl
     
 def birthday_message(friend):
-    return f"Happy Birthday {friend['name']}!"
-    
+    return chat_gpt.birthday_message(friend['name'],friend['birth_month'],friend['birth_day'])
+  
 def birthday_post(friends):
     for friend in friends:
         driver.get(friend['link'])
