@@ -14,7 +14,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time,re,json,os,logging
 from datetime import datetime
 from dotenv import load_dotenv
-import chat_gpt
+
 
 from random_user_agent.user_agent import UserAgent
 from random_user_agent.params import SoftwareName,OperatingSystem
@@ -50,10 +50,11 @@ user_agent_rotator = UserAgent(software_names = software_names,
                                limit = 100)
 user_agent = user_agent_rotator.get_random_user_agent() 
 option = Options()
-option.add_argument(f'user-agent={user_agent}')
+#option.add_argument(f'user-agent={user_agent}')
 option.add_argument('--disable-gpu')
 option.add_argument("--disable-notifications")
-option.add_argument("--headless=new")
+#option.add_argument("--headless=new")
+
 
 driver = webdriver.Chrome(options=option,service=ChromeService(ChromeDriverManager().install()))
         
@@ -71,7 +72,7 @@ def crawl():
     return links_to_crawl
     
 def birthday_message(friend):
-    return chat_gpt.birthday_message(friend['name'],friend['birth_month'],friend['birth_day'])
+    return f"Happy Birthday {friend['name']}!"
   
 def birthday_post(friends):
     for friend in friends:
@@ -92,7 +93,9 @@ def birthday_post(friends):
                     if (b.text == 'Post'):
                         driver.execute_script("arguments[0].click();", b)
                         print(f"Message Posted : {message}, name: {friend['name']},link:{friend['link']}")
-
+                        time.sleep(5)
+                        break
+                break
                 
 def birthday_check():
     about_class_texts = driver.find_elements(By.CSS_SELECTOR, '.x193iq5w.xeuugli.x13faqbe.x1vvkbs.xlh3980.xvmahel.x1n0sxbx.x1lliihq.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x4zkp8e.x3x7a5m.x6prxxf.xvq8zen.xo1l8bm.xzsf02u.x1yc453h')
@@ -114,9 +117,10 @@ def is_birthday():
     json_object = json.dumps(friend_data_is_birthday, indent = 4)
     with open ('friend_data.json', 'w+') as f:
         f.write(json_object)
-    return [friend for friend in friend_data if friend['is_birthday'] == True]
+    return [friend for friend in friend_data_is_birthday if friend['is_birthday'] == True]
 
 def get_friend_data(friend_links):
+    friend_data_list = []
     for link in friend_links:
         with open('friend_data.json','r') as f:
             friend_data_list =  json.load(f)
@@ -219,8 +223,9 @@ def main():
         links_to_crawl = crawl()
         if links_to_crawl is not None:
             get_friend_data(links_to_crawl)
-    except:
+    except Exception as e:
         logging.debug(f'crawl falied {datetime.now()}')
+        print(e)
     birthdays = is_birthday()
     birthday_post(birthdays)
     #script will be running daily but this will only execute
