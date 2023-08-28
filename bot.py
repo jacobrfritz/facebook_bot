@@ -10,10 +10,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 from bs4 import BeautifulSoup
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 import time,re,json,os,logging
 from datetime import datetime
 from dotenv import load_dotenv
+
 
 
 from random_user_agent.user_agent import UserAgent
@@ -53,10 +54,10 @@ option = Options()
 #option.add_argument(f'user-agent={user_agent}')
 option.add_argument('--disable-gpu')
 option.add_argument("--disable-notifications")
-#option.add_argument("--headless=new")
+option.add_argument("--headless=new")
+service = Service()
 
-
-driver = webdriver.Chrome(options=option,service=ChromeService(ChromeDriverManager().install()))
+driver = webdriver.Chrome(service = service,options=option)
         
 def crawl():
     #keep track of which links have been crawled
@@ -76,6 +77,7 @@ def birthday_message(friend):
   
 def birthday_post(friends):
     for friend in friends:
+        time.sleep(5)
         driver.get(friend['link'])
         time.sleep(5)
         els = driver.find_elements(By.CSS_SELECTOR,'.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6')
@@ -237,7 +239,11 @@ def main():
             get_friend_links()
         except:
             logging.debug(f'get friend links failed {datetime.now()}')
-main()
+try:
+    main()
+    print('done')
+except Exception as e:
+    print(e)
 
 
 
