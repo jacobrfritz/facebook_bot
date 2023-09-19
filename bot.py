@@ -1,11 +1,5 @@
-#need to add support for chat gpt happy birthday
-#need to keep track of who you've said happy birthday to
-#add error handling that adds a friend object with error
-
 from selenium import webdriver
 from selenium.webdriver import ActionChains
-from selenium.webdriver.common.actions.action_builder import ActionBuilder
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
@@ -14,13 +8,6 @@ from selenium.webdriver.chrome.service import Service
 import time,re,json,os,logging
 from datetime import datetime
 from dotenv import load_dotenv
-
-
-
-from random_user_agent.user_agent import UserAgent
-from random_user_agent.params import SoftwareName,OperatingSystem
-
-logging.basicConfig(filename='app.log', format='%(name)s - %(levelname)s - %(message)s',level=logging.DEBUG)
 
 load_dotenv() 
 
@@ -44,14 +31,8 @@ current_day = datetime.now().day
 current_hour = datetime.now().hour
 current_minute = datetime.now().minute
 
-software_names = [SoftwareName.CHROME.value]
-operating_systems = [OperatingSystem.WINDOWS.value,OperatingSystem.LINUX.value]
-user_agent_rotator = UserAgent(software_names = software_names, 
-                               operating_systems = operating_systems, 
-                               limit = 100)
-user_agent = user_agent_rotator.get_random_user_agent() 
+#selenium options
 option = Options()
-#option.add_argument(f'user-agent={user_agent}')
 option.add_argument('--disable-gpu')
 option.add_argument("--disable-notifications")
 option.add_argument("--headless=new")
@@ -59,9 +40,8 @@ service = Service()
 
 driver = webdriver.Chrome(service = service,options=option)
         
+#gives you a list of friends that don't have birthday data
 def crawl():
-    #keep track of which links have been crawled
-    #max 25 per day
     with open('friend_data.json', 'r') as f:
             friends = json.load(f)
     with open('friend_links.json','r') as f:
@@ -69,12 +49,13 @@ def crawl():
     links_with_data = [link['link'] for link in friends]
     no_data_links = [link for link in links if link not in links_with_data]
     links_to_crawl = no_data_links[0:50]
-    #crawl
     return links_to_crawl
-    
+
+#text included in facebook post  
 def birthday_message(friend):
     return f"Happy Birthday {friend['name']}!"
-  
+
+#navigates to friends wall and opens post
 def birthday_post(friends):
     for friend in friends:
         time.sleep(5)
@@ -98,7 +79,8 @@ def birthday_post(friends):
                         time.sleep(5)
                         break
                 break
-                
+
+#checks if friends birthday is in their profile 
 def birthday_check():
     about_class_texts = driver.find_elements(By.CSS_SELECTOR, '.x193iq5w.xeuugli.x13faqbe.x1vvkbs.xlh3980.xvmahel.x1n0sxbx.x1lliihq.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x4zkp8e.x3x7a5m.x6prxxf.xvq8zen.xo1l8bm.xzsf02u.x1yc453h')
     for about_class_text in about_class_texts:
@@ -106,6 +88,7 @@ def birthday_check():
             return about_class_text.text
     return None
         
+#checks which friends have birthdays today
 def is_birthday():
     with open('friend_data.json') as f:
         friend_data = json.load(f)
@@ -121,6 +104,8 @@ def is_birthday():
         f.write(json_object)
     return [friend for friend in friend_data_is_birthday if friend['is_birthday'] == True]
 
+#goes to your friends profile, gets birthday data if available
+#then saves to json
 def get_friend_data(friend_links):
     friend_data_list = []
     for link in friend_links:
@@ -166,6 +151,7 @@ def get_friend_data(friend_links):
             f.write(json_object)
     return friend_data_list
 
+#scrolls through friends page to reveal friends dynamically
 def scroll():
     last_last_person = None
     this_last_person = None
@@ -182,6 +168,7 @@ def scroll():
         last_last_person = this_last_person
         time.sleep(3)
             
+#gathers links to all friends profiles
 def get_friend_links():
     
     driver.get('https://www.facebook.com/friends/list')
@@ -197,7 +184,7 @@ def get_friend_links():
     with open('friend_links.json','w+') as f:
         f.write(json_object)
     
-    
+#logs into facebook profile 
 def login():
     driver.get('https://facebook.com')
     time.sleep(2)
@@ -206,6 +193,7 @@ def login():
     driver.find_element(by = 'name',value = 'login').click()
     time.sleep(5)
 
+#executes on first run
 def new():
     if (os.path.exists('friend_links.json') == False):
         get_friend_links()
