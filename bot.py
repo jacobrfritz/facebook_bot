@@ -53,7 +53,7 @@ def crawl():
 
 #text included in facebook post  
 def birthday_message(friend):
-    return f"Happy Birthday {friend['name']}!"
+    return f"""Happy Birthday!"""
 
 #navigates to friends wall and opens post
 def birthday_post(friends):
